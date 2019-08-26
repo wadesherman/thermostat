@@ -1,23 +1,27 @@
 import threading
 from time import sleep
+from queue import Queue
 
 
 class Thermostat(object):
     values = None
     thread = None
-    observers = []
+    queue = Queue()
 
-    def __init__(self, io, values):
+    def __init__(self, io):
         self.io = io
-        self.values = values
         self.programs = {
             'heat': self.heat,
             'cool': self.cool,
             'fan': self.fan,
         }
 
-    def run(self, program):
-        None
+    def loop(self):
+        while True:
+            print(f'thermostat loop')
+            # task = self.queue.get()
+            # print(task)
+            sleep(1)
         # kill existing thread
         # run new thread
 

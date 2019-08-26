@@ -4,7 +4,7 @@ class Sensor(object):
         self.sensor = sensor
 
     def get_temperature(self):
-        self.sensor.get_temperature()
+        return self.sensor.get_temperature()
 
     def get_humidity(self):
-        self.sensor.get_humidity()
+        return self.sensor.get_humidity()

@@ -4,10 +4,10 @@ import threading
 from time import sleep
 from dotenv import load_dotenv
 
-from display import Display, InkyPhatAdapter
-from thermostat import Thermostat, GpioAdapter
+from display import Display, TestDisplayAdapter
+from thermostat import Thermostat, TestIOAdapter
 from store import Values
-from sensor import Sensor, Si7021Adapter
+from sensor import Sensor, TestSensorAdapter
 
 load_dotenv(override=True)
 
@@ -26,6 +26,7 @@ def on_message(client, userdata, message):
     # interpret state or set_temp message and update registers
     payload = str(message.payload.decode("utf-8"))
     topic = str(message.topic.decode("utf-8"))
+    print(topic + ": " + payload)
     # if(settemp):
     #   lock
     #   update temp
@@ -51,19 +52,25 @@ if __name__ == "__main__":
     mqttc.loop_start()
 
     # Put the display on its own thread
-    Display(InkyPhatAdapter, values)
-    display_thread = threading.Thread(target=Display.loop)
+    display = Display(TestDisplayAdapter())
+    display_thread = threading.Thread(target=display.loop)
     display_thread.start()
 
     # Put the thermostat on its own thread
-    thermostat = Thermostat(GpioAdapter, values)
-    thermostat_thread = threading.Thread(target=Thermostat.loop)
+    thermostat = Thermostat(TestIOAdapter())
+    thermostat_thread = threading.Thread(target=thermostat.loop)
     thermostat_thread.start()
 
+    # register the Display and Thermostat with the Values store to receive
+    # updates when values are updated.
+    values.add_observer(display)
+    values.add_observer(thermostat)
+
     # Polling the temp/humidity sensor can happen right here
-    sensor = Sensor(Si7021Adapter)
+    sensor = Sensor(TestSensorAdapter())
     # sensor = Sensor(DHTAdapter("DHT22",23)
     while epic:
-        values.set("current_temperature", sensor.get_temperature())
-        values.set("current_humidity", sensor.get_humidity())
+        values.write("current_temperature", sensor.get_temperature())
+        values.write("current_humidity", sensor.get_humidity())
+        print(f'main loop: t_{sensor.get_temperature()} h_{sensor.get_humidity()}')
         sleep(30)
