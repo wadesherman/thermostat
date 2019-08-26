@@ -1,10 +1,10 @@
-class Temperature(object):
+class Sensor(object):
 
-  def __init__(self, sensor):
-    self.sensor = sensor
+    def __init__(self, sensor):
+        self.sensor = sensor
 
-  def getTemperature(self):
-    self.sensor.getTemperature
+    def get_temperature(self):
+        self.sensor.get_temperature()
 
-  def getHumidity(self):
-     self.sensor.getHumidity
+    def get_humidity(self):
+        self.sensor.get_humidity()

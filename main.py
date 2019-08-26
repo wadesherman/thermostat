@@ -4,65 +4,61 @@ import threading
 from time import sleep
 from dotenv import load_dotenv
 
+from display import Display, InkyPhatAdapter
+from thermostat import Thermostat, GpioAdapter
+from store import Values
+
 load_dotenv(override=True)
 
 epic = True
 
-// registers to be shared across threads
-register = {
-  "current_temp": 0,
-  "current_humidity: : 0,
-  "state": 'off',
-  "hvac_state": 'heat', // heat, fan, cool
-  "set_temp": 0,
-}
-
-registerLock = Lock() 
-
-// this should be in the Display "contract"
-def display_loop():
-  display = Display()
-  // do some setup. 
-
-  while epic:
-    registerLock.aquire() 
-    // update display
-    registerLock.release()
-    sleep(60) //
+# registers to be shared across threads
+values = Values()
+values.initialize("current_temperature")
+values.initialize("current_humidity")
+values.initialize("state", "off")
+values.initialize("hvac_state", "heat")
+values.initialize("set_temp")
 
 def on_message(client, userdata, message):
-  // interpret state or set_temp message and update registers    
-  // payload = str(message.payload.decode("utf-8"))
-  // topic = str(message.topic.decode("utf-8"))
-  if(settemp):
-    lock
-    update temp
-    unlock
-  
-  if(state):
-    Thermostat.run(payload)
+    # interpret state or set_temp message and update registers
+    payload = str(message.payload.decode("utf-8"))
+    topic = str(message.topic.decode("utf-8"))
+    # if(settemp):
+    #   lock
+    #   update temp
+    #   unlock
+    #
+    # if(state):
+    #   Thermostat.run(payload)
 
 def on_connect(client, userdata, flags, rc):
     mqttc.subscribe(os.getenv("STATE_TOPIC"))
+    mqttc.subscribe(os.getenv("HVAC_STATE_TOPIC"))
     mqttc.subscribe(os.getenv("SET_TEMP_TOPIC"))
-
-mqttc = mqtt.Client("Thermostat") //should add uuid for uniqueness
-mqttc.on_connect=on_connect
-mqttc.on_message=on_message
-mqttc.connect(os.getenv("MQ_BROKER"))
-mqttc.loop_start()
 
 
 if __name__ == "__main__":
 
-  // the display runs in its own thread
-  display_thread = threading.Thread(targets=Display.loop)
-  display_thread.start()
-  
-  // in do MQTT, sensor sampling in this thread
-  while epic:
-    
-    registerLock.aquire()
-    // sample temperature every 30 seconds.
-    registerLock.release()
-    sleep(30)
+    # MQTT takes care of its own non-blocking thread
+    mqttc = mqtt.Client("Thermostat")  # should add uuid for uniqueness
+    mqttc.on_connect = on_connect
+    mqttc.on_message = on_message
+    mqttc.connect(os.getenv("MQ_BROKER"))
+    mqttc.loop_start()
+
+    # Put the display on its own thread
+    Display(InkyPhatAdapter, values)
+    display_thread = threading.Thread(target=Display.loop)
+    display_thread.start()
+
+    # Put the thermostat on its own thread
+    thermostat = Thermostat(GpioAdapter, values)
+    thermostat_thread = threading.Thread(target=Thermostat.loop)
+    thermostat_thread.start()
+
+    # Polling the temp/humidity sensor can happen right here
+    while epic:
+        values.set("current_temperature", 75)
+        values.set("current_humidity", 61)
+        sleep(30)
