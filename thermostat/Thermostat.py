@@ -21,9 +21,6 @@ class Thermostat(object):
         # kill existing thread
         # run new thread
 
-    def kill(self):
-        self.thread.kill()
-
     def heat(self):
         while self.values.read("hvac_state") == "heat":
             if self.values.read("current_temperature") < self.values.read("set_temperature"):

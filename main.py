@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from display import Display, InkyPhatAdapter
 from thermostat import Thermostat, GpioAdapter
 from store import Values
+from sensor import Sensor, Si7021Adapter
 
 load_dotenv(override=True)
 
@@ -20,6 +21,7 @@ values.initialize("state", "off")
 values.initialize("hvac_state", "heat")
 values.initialize("set_temp")
 
+
 def on_message(client, userdata, message):
     # interpret state or set_temp message and update registers
     payload = str(message.payload.decode("utf-8"))
@@ -31,6 +33,7 @@ def on_message(client, userdata, message):
     #
     # if(state):
     #   Thermostat.run(payload)
+
 
 def on_connect(client, userdata, flags, rc):
     mqttc.subscribe(os.getenv("STATE_TOPIC"))
@@ -58,7 +61,9 @@ if __name__ == "__main__":
     thermostat_thread.start()
 
     # Polling the temp/humidity sensor can happen right here
+    sensor = Sensor(Si7021Adapter)
+    # sensor = Sensor(DHTAdapter("DHT22",23)
     while epic:
-        values.set("current_temperature", 75)
-        values.set("current_humidity", 61)
+        values.set("current_temperature", sensor.get_temperature())
+        values.set("current_humidity", sensor.get_humidity())
         sleep(30)
