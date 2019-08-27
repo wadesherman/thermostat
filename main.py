@@ -17,9 +17,9 @@ epic = True
 values = Values()
 values.initialize("current_temperature")
 values.initialize("current_humidity")
-values.initialize("state", "off")
-values.initialize("hvac_state", "heat")
-values.initialize("set_temp")
+values.initialize("state")
+values.initialize("hvac_state")
+values.initialize("set_temperature")
 
 
 def on_message(client, userdata, message):
@@ -53,12 +53,13 @@ if __name__ == "__main__":
 
     # Put the display on its own thread
     display = Display(TestDisplayAdapter())
-    display_thread = threading.Thread(target=display.loop)
+    display_thread = threading.Thread(target=display.loop, daemon=True)
+    display_thread.daemon = True
     display_thread.start()
 
     # Put the thermostat on its own thread
     thermostat = Thermostat(TestIOAdapter())
-    thermostat_thread = threading.Thread(target=thermostat.loop)
+    thermostat_thread = threading.Thread(target=thermostat.loop, daemon=True)
     thermostat_thread.start()
 
     # register the Display and Thermostat with the Values store to receive
@@ -73,4 +74,5 @@ if __name__ == "__main__":
     while epic:
         values.write("current_temperature", sensor.get_temperature())
         values.write("current_humidity", sensor.get_humidity())
-        sleep(5)
+        sleep(15)
+

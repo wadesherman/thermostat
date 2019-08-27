@@ -29,4 +29,4 @@ class Values(object):
 
     def notify_observers(self, i):
         for o in self.observers:
-            o.queue.put(i)
+            o.notify(i)
