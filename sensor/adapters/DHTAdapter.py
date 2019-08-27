@@ -1,8 +1,10 @@
+from ..SensorAdapterInterface import SensorAdapterInterface
+
 import Adafruit_DHT
 from time import time
 
 
-class DHTAdapter(object):
+class DHTAdapter(SensorAdapterInterface):
     humidity: float
     temperature: float
     last_read: float = 0

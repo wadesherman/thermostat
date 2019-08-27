@@ -18,30 +18,27 @@ class Thermostat(object):
 
     def loop(self):
         while True:
-            print(f'thermostat loop')
-            # task = self.queue.get()
-            # print(task)
-            sleep(1)
-        # kill existing thread
-        # run new thread
+            item = self.queue.get()
+            print(f'thermostat: {item}')
+            self.queue.task_done()
 
     def heat(self):
         while self.values.read("hvac_state") == "heat":
             if self.values.read("current_temperature") < self.values.read("set_temperature"):
-                self.io.heatRelay.on()
+                self.io.heat_relay.on()
             else:
-                self.io.heatRelay.off()
+                self.io.heat_relay.off()
             sleep(1)
 
     def cool(self):
         while self.values.read("hvac_state") == "cool":
             if self.values.read("current_temperature") > self.values.read("set_temperature"):
-                self.io.coolRelay.on()
+                self.io.cool_relay.on()
             else:
-                self.io.coolRelay.off()
+                self.io.cool_relay.off()
             sleep(1)
 
     def fan(self):
-        self.io.fanRelay.on()
+        self.io.fan_relay.on()
         while self.values.read("hvac_state") == "fan":
             sleep(1)

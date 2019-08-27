@@ -4,10 +4,10 @@ import threading
 from time import sleep
 from dotenv import load_dotenv
 
-from display import Display, TestDisplayAdapter
-from thermostat import Thermostat, TestIOAdapter
+from display import *
+from thermostat import *
 from store import Values
-from sensor import Sensor, TestSensorAdapter
+from sensor import *
 
 load_dotenv(override=True)
 
@@ -68,9 +68,9 @@ if __name__ == "__main__":
 
     # Polling the temp/humidity sensor can happen right here
     sensor = Sensor(TestSensorAdapter())
-    # sensor = Sensor(DHTAdapter("DHT22",23)
+    # sensor = Sensor(Si7021Adapter())
+    # sensor = Sensor(DHTAdapter("DHT22",23))
     while epic:
         values.write("current_temperature", sensor.get_temperature())
         values.write("current_humidity", sensor.get_humidity())
-        print(f'main loop: t_{sensor.get_temperature()} h_{sensor.get_humidity()}')
-        sleep(30)
+        sleep(5)

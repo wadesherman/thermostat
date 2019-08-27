@@ -1,7 +1,9 @@
+from ..DisplayAdapterInterface import DisplayAdapterInterface
+
 from inky import InkyPHAT
 
 
-class InkyPhatAdapter(object):
+class InkyPhatAdapter(DisplayAdapterInterface):
     refresh_interval = 60
     inkyphat = InkyPHAT('red')
 

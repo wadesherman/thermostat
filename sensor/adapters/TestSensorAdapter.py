@@ -1,19 +1,17 @@
-from si7021 import Si7021
-from smbus2 import SMBus
+from ..SensorAdapterInterface import SensorAdapterInterface
+
 from time import time
+from random import randint
 
 
-class Si7021Adapter(object):
-    humidity: float
-    temperature: float
+class TestSensorAdapter(SensorAdapterInterface):
+    humidity: int
+    temperature: int
     last_read: float = 0
-
-    def __init__(self):
-        self.sensor = Si7021(SMBus(1))
 
     def read(self):
         if time() - self.last_read > 30:
-            self.humidity, self.temperature = self.sensor.read()
+            self.humidity, self.temperature = (randint(60, 65), randint(72, 80))
             self.last_read = time()
 
     def get_temperature(self):

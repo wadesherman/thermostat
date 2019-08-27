@@ -19,7 +19,9 @@ class Values(object):
 
     def write(self, key, value):
         self.lock.acquire()
-        self.dict[key] = value
+        if self.dict[key] != value:
+            self.dict[key] = value
+            self.notify_observers({key: value})
         self.lock.release()
 
     def add_observer(self, observer):
