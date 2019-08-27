@@ -8,6 +8,9 @@ class Display(object):
     def __init__(self, display):
         self.display = display
 
+    def notify(self, m):
+        self.queue.put(m)
+
     def loop(self):
         while True:
             item = self.queue.get()
