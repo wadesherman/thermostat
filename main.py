@@ -1,4 +1,3 @@
-import paho.mqtt.client as mqtt
 import os
 import threading
 from time import sleep
@@ -8,53 +7,26 @@ from display import *
 from thermostat import *
 from store import Values
 from sensor import *
+from network import *
 
 load_dotenv(override=True)
 
 epic = True
 
-# registers to be shared across threads
-values = Values()
-values.initialize("current_temperature")
-values.initialize("current_humidity")
-values.initialize("state")
-values.initialize("hvac_state")
-values.initialize("set_temperature")
-
-
-def on_message(client, userdata, message):
-    # interpret state or set_temp message and update registers
-    payload = str(message.payload.decode("utf-8"))
-    topic = str(message.topic.decode("utf-8"))
-    print(topic + ": " + payload)
-    # if(settemp):
-    #   lock
-    #   update temp
-    #   unlock
-    #
-    # if(state):
-    #   Thermostat.run(payload)
-
-
-def on_connect(client, userdata, flags, rc):
-    mqttc.subscribe(os.getenv("STATE_TOPIC"))
-    mqttc.subscribe(os.getenv("HVAC_STATE_TOPIC"))
-    mqttc.subscribe(os.getenv("SET_TEMP_TOPIC"))
-
-
 if __name__ == "__main__":
+    values = Values()
 
-    # MQTT takes care of its own non-blocking thread
-    mqttc = mqtt.Client("Thermostat")  # should add uuid for uniqueness
-    mqttc.on_connect = on_connect
-    mqttc.on_message = on_message
-    mqttc.connect(os.getenv("MQ_BROKER"))
-    mqttc.loop_start()
+    network_interface = MqttAdapter(os.getenv("MQ_BROKER"), values)
+    network_interface.start()
+    network_interface.loop()
+
+    http_interface = FlaskAdapter()
+    http_interface.start()
+    http_interface.loop()
 
     # Put the display on its own thread
     display = Display(TestDisplayAdapter())
     display_thread = threading.Thread(target=display.loop, daemon=True)
-    display_thread.daemon = True
     display_thread.start()
 
     # Put the thermostat on its own thread
@@ -66,13 +38,19 @@ if __name__ == "__main__":
     # updates when values are updated.
     values.add_observer(display)
     values.add_observer(thermostat)
+    values.add_observer(network_interface)
 
     # Polling the temp/humidity sensor can happen right here
     sensor = Sensor(TestSensorAdapter())
     # sensor = Sensor(Si7021Adapter())
     # sensor = Sensor(DHTAdapter("DHT22",23))
+
+    values.write("current_temperature", sensor.get_temperature())
+    values.write("set_temperature", 72)
+    values.write("state", "off")
+    values.write("hvac_state", "heat")
+
     while epic:
         values.write("current_temperature", sensor.get_temperature())
         values.write("current_humidity", sensor.get_humidity())
         sleep(15)
-

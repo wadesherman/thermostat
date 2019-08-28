@@ -3,13 +3,14 @@ import threading
 
 class Values(object):
     lock = threading.Lock()
-    dict = {}
+    dict = {
+        "current_temperature": None,
+        "current_humidity": None,
+        "state": None,
+        "hvac_state": None,
+        "set_temperature": None,
+    }
     observers = []
-
-    def initialize(self, key, default=None):
-        self.lock.acquire()
-        self.dict[key] = default
-        self.lock.release()
 
     def read(self, key):
         self.lock.acquire()
@@ -19,8 +20,14 @@ class Values(object):
 
     def write(self, key, value):
         self.lock.acquire()
-        if self.dict[key] != value:
+        if key in self.dict and self.dict[key] != value:
             self.dict[key] = value
+            self.notify_observers({key: value})
+        self.lock.release()
+
+    def broadcast_values(self):
+        self.lock.acquire()
+        for key, value in self.dict.items():
             self.notify_observers({key: value})
         self.lock.release()
 
